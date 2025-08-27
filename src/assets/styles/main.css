@@ -1,0 +1,25 @@
+/* src/assets/styles/main.css */
+
+/*
+  使用 border-box 模型，让元素的 width 和 height 包含 padding 和 border。
+  这是现代 CSS 布局的基石。
+*/
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/*
+  重置默认的 body 样式，设置一个优雅的、跨平台的字体栈，
+  灵感来源于 Apple 的设计。
+*/
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #333;
+  background-color: #fff;
+}
