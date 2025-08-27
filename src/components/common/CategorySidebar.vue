@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-// 导入 useRoute 来访问当前路由信息
 import { RouterLink, useRoute } from 'vue-router'
 import { api } from '../../services/index.js'
 
@@ -20,7 +19,6 @@ onMounted(async () => {
   <aside class="category-sidebar">
     <h2>商品分类</h2>
     <ul>
-      <!-- 1. 新增：“全部商品”链接 -->
       <li>
         <RouterLink
           :to="{ name: 'productList' }"
@@ -32,8 +30,6 @@ onMounted(async () => {
           全部商品
         </RouterLink>
       </li>
-
-      <!-- 动态生成的分类链接 -->
       <li v-for="category in categories" :key="category.id">
         <RouterLink
           :to="{ name: 'productList', query: { categoryId: category.id } }"
@@ -55,6 +51,11 @@ onMounted(async () => {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   height: fit-content;
+
+  /* 关键改动：添加 sticky 定位 */
+  position: sticky;
+  /* 当它滚动到距离视窗顶部 40px 时，就固定住 */
+  top: 40px;
 }
 
 h2 {

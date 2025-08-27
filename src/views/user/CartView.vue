@@ -1,15 +1,18 @@
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { api } from '../../services/index.js'
-
-// 导入需要的 stores
 import { useCartStore } from '../../store/cart.js'
 import { useNotificationStore } from '../../store/notification.js'
 
 const cartStore = useCartStore()
 const notificationStore = useNotificationStore()
+const router = useRouter()
 
-// 组件挂载时，从 API 获取最新的购物车数据，确保数据同步
+// 用于控制结算按钮的加载状态
+const isCheckingOut = ref(false)
+
+// 组件挂载时，从 API 获取最新的购物车数据
 onMounted(async () => {
   try {
     const cartData = await api.getCart()
@@ -40,6 +43,25 @@ const handleDeleteItem = async (itemId) => {
     notificationStore.showNotification('商品已从购物车移除', 'success')
   } catch (error) {
     notificationStore.showNotification('移除失败', 'error')
+  }
+}
+
+// 处理结算的函数
+const handleCheckout = async () => {
+  if (isCheckingOut.value) return
+  isCheckingOut.value = true
+
+  try {
+    // 调用结算 API
+    await api.checkout()
+    // 清空前端 Pinia store 中的购物车
+    cartStore.clearCart()
+    // 跳转到成功页面
+    router.push({ name: 'checkoutSuccess' })
+  } catch (error) {
+    notificationStore.showNotification('结算失败，请稍后再试', 'error')
+  } finally {
+    isCheckingOut.value = false
   }
 }
 </script>
@@ -76,7 +98,10 @@ const handleDeleteItem = async (itemId) => {
             <span>商品总计</span>
             <span>¥ {{ cartStore.totalPrice.toFixed(2) }}</span>
           </div>
-          <button class="checkout-btn">前往结算</button>
+          <!-- 将按钮的点击事件和禁用状态绑定 -->
+          <button @click="handleCheckout" :disabled="isCheckingOut" class="checkout-btn">
+            {{ isCheckingOut ? '正在处理...' : '前往结算' }}
+          </button>
         </div>
       </div>
       <!-- 当购物车为空时 -->
@@ -177,6 +202,10 @@ h1 {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+.checkout-btn:disabled {
+  background-color: #a5a5a5;
+  cursor: not-allowed;
 }
 .empty-cart {
   text-align: center;

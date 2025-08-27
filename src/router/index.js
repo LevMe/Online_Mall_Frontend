@@ -9,6 +9,7 @@ import AuthView from '../views/user/AuthView.vue'
 import CartView from '../views/user/CartView.vue'
 import AdminLayout from '../components/layout/AdminLayout.vue'
 import ProductManagementView from '../views/admin/ProductManagementView.vue'
+import CheckoutSuccessView from '../views/user/CheckoutSuccessView.vue'
 
 const routes = [
   // ... home 和 productList 路由保持不变 ...
@@ -61,6 +62,12 @@ const routes = [
       // 未来可以添加更多后台子路由
       // { path: 'users', name: 'adminUserList', component: ... }
     ],
+  },
+
+  {
+    path: '/checkout-success',
+    name: 'checkoutSuccess',
+    component: CheckoutSuccessView,
   },
 ]
 

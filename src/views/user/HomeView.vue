@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../../services/index.js'
 import ProductCard from '../../components/common/ProductCard.vue'
-// 1. 导入侧边栏组件
 import CategorySidebar from '../../components/common/CategorySidebar.vue'
 
 const products = ref([])
@@ -20,7 +19,6 @@ onMounted(async () => {
 <template>
   <main class="page-with-sidebar">
     <div class="container">
-      <!-- 2. 添加侧边栏 -->
       <CategorySidebar />
       <div class="main-content">
         <div class="product-grid">
@@ -38,16 +36,17 @@ onMounted(async () => {
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  /* 3. 使用 Flexbox 创建两栏布局 */
   display: flex;
-  gap: 40px; /* 定义侧边栏和主内容区的间距 */
+  gap: 30px;
+  /* 关键改动：让侧边栏和主内容区从顶部对齐 */
+  align-items: flex-start;
 }
 
 .main-content {
-  flex-grow: 1; /* 主内容区占据所有剩余空间 */
+  flex-grow: 1;
 }
 
 .product-grid {

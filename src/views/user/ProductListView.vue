@@ -59,8 +59,9 @@ watch(
   margin: 0 auto;
   padding: 0 20px;
   display: flex;
-  /* 解决问题一：增加侧边栏和主内容区的间距 */
   gap: 30px;
+  /* 关键改动：让侧边栏和主内容区从顶部对齐 */
+  align-items: flex-start;
 }
 
 .main-content {

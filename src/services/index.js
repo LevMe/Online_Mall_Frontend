@@ -366,4 +366,18 @@ export const api = {
       }, 500) // 模拟网络延迟
     })
   },
+
+  /**
+   * 模拟结算，清空购物车
+   * @returns {Promise<Object>}
+   */
+  checkout: () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // 在模拟后端，将购物车数组清空
+        mockCart = []
+        resolve({ message: '结算成功，购物车已清空' })
+      }, 600) // 模拟支付处理延迟
+    })
+  },
 }
