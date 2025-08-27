@@ -49,7 +49,7 @@ onUnmounted(() => {
 .back-to-top-btn {
   position: fixed; /* 固定在视窗的某个位置 */
   bottom: 140px;
-  right: 250px;
+  right: 150px;
   width: 50px;
   height: 50px;
   border-radius: 50%; /* 圆形按钮 */

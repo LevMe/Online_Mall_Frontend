@@ -38,12 +38,12 @@ onMounted(async () => {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
   /* 3. 使用 Flexbox 创建两栏布局 */
   display: flex;
-  gap: 20px; /* 定义侧边栏和主内容区的间距 */
+  gap: 40px; /* 定义侧边栏和主内容区的间距 */
 }
 
 .main-content {

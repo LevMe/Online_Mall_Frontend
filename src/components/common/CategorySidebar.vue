@@ -20,6 +20,20 @@ onMounted(async () => {
   <aside class="category-sidebar">
     <h2>商品分类</h2>
     <ul>
+      <!-- 1. 新增：“全部商品”链接 -->
+      <li>
+        <RouterLink
+          :to="{ name: 'productList' }"
+          :class="{
+            'is-active':
+              (route.name === 'productList' && !route.query.categoryId) || route.name === 'home',
+          }"
+        >
+          全部商品
+        </RouterLink>
+      </li>
+
+      <!-- 动态生成的分类链接 -->
       <li v-for="category in categories" :key="category.id">
         <RouterLink
           :to="{ name: 'productList', query: { categoryId: category.id } }"
@@ -57,7 +71,6 @@ ul {
   margin: 0;
 }
 
-/* 为 li 添加下边距，解决视觉上粘连的问题 */
 li {
   margin-bottom: 5px;
 }
@@ -78,7 +91,6 @@ li a:hover {
   color: #007aff;
 }
 
-/* 确保我们的自定义 active class 生效 */
 li a.is-active {
   background-color: #007aff;
   color: #fff;
