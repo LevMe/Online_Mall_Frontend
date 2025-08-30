@@ -3,25 +3,21 @@ import { ref, onMounted, computed } from 'vue'
 import { api } from '../../services/index.js'
 import ProductFormModal from '../../components/admin/ProductFormModal.vue'
 import { useNotificationStore } from '../../store/notification.js'
-
-// 1. 导入 ConfirmationModal 组件
 import ConfirmationModal from '../../components/common/ConfirmationModal.vue'
 
 // --- 响应式状态 ---
 const allProducts = ref([])
 const categories = ref([])
 const isLoading = ref(true)
-const isFormModalVisible = ref(false) // 表单模态框
+const isFormModalVisible = ref(false)
 const notificationStore = useNotificationStore()
 const productBeingEdited = ref(null)
-
-// 2. 新增：删除确认模态框的状态
 const isDeleteConfirmVisible = ref(false)
-const productToDelete = ref(null) // 存储待删除的商品对象
+const productToDelete = ref(null)
 
 // --- 分页状态 ---
 const currentPage = ref(1)
-const itemsPerPage = ref(5)
+const itemsPerPage = ref(10)
 
 // --- 计算属性 ---
 const totalPages = computed(() => Math.ceil(allProducts.value.length / itemsPerPage.value))
@@ -31,62 +27,54 @@ const paginatedProducts = computed(() => {
 })
 
 // --- 方法 ---
-
-// 打开“添加”模态框
 const openAddModal = () => {
   productBeingEdited.value = null
   isFormModalVisible.value = true
 }
 
-// 打开“编辑”模态框
 const openEditModal = (product) => {
-  productBeingEdited.value = product
+  productBeingEdited.value = { ...product } // 传递副本以防意外修改
   isFormModalVisible.value = true
 }
 
-// 统一的表单提交处理器
 const handleFormSubmit = async (productData) => {
-  // ... (此部分逻辑保持不变)
-  if (productBeingEdited.value) {
-    try {
+  try {
+    if (isEditMode.value) {
+      // 编辑模式
       const updatedProduct = await api.updateProduct(productBeingEdited.value.id, productData)
       const index = allProducts.value.findIndex((p) => p.id === updatedProduct.id)
-      if (index !== -1) allProducts.value[index] = updatedProduct
+      if (index !== -1) {
+        allProducts.value.splice(index, 1, updatedProduct)
+      }
       notificationStore.showNotification('商品更新成功！', 'success')
-    } catch (error) {
-      notificationStore.showNotification('更新失败，请重试', 'error')
-    }
-  } else {
-    try {
+    } else {
+      // 添加模式
       const newProduct = await api.addProduct(productData)
       allProducts.value.unshift(newProduct)
       notificationStore.showNotification('商品添加成功！', 'success')
-    } catch (error) {
-      notificationStore.showNotification('添加失败，请重试', 'error')
     }
+  } catch (error) {
+    notificationStore.showNotification(error.message || '操作失败，请重试', 'error')
+  } finally {
+    isFormModalVisible.value = false
   }
-  isFormModalVisible.value = false
 }
 
-// 3. 新增：打开删除确认模态框
 const openDeleteConfirm = (product) => {
   productToDelete.value = product
   isDeleteConfirmVisible.value = true
 }
 
-// 4. 新增：处理确认删除的逻辑
 const handleConfirmDelete = async () => {
   if (!productToDelete.value) return
 
   try {
     await api.deleteProduct(productToDelete.value.id)
-    // 从前端列表中移除该商品
     allProducts.value = allProducts.value.filter((p) => p.id !== productToDelete.value.id)
     notificationStore.showNotification('商品删除成功！', 'success')
   } catch (error) {
-    notificationStore.showNotification('删除失败，请重试', 'error')
+    notificationStore.showNotification(error.message || '删除失败，请重试', 'error')
   } finally {
-    // 关闭模态框并重置状态
     isDeleteConfirmVisible.value = false
     productToDelete.value = null
   }
@@ -103,8 +91,10 @@ const goToPage = (page) => {
   }
 }
 
+// --- 生命周期钩子 ---
 onMounted(async () => {
   try {
+    // 并行获取商品和分类数据
     const [productsData, categoriesData] = await Promise.all([
       api.getProducts(),
       api.getCategories(),
@@ -112,11 +102,14 @@ onMounted(async () => {
     allProducts.value = productsData
     categories.value = categoriesData
   } catch (error) {
-    console.error('获取数据失败:', error)
+    notificationStore.showNotification(error.message || '获取数据失败', 'error')
   } finally {
     isLoading.value = false
   }
 })
+
+// --- 辅助计算属性 ---
+const isEditMode = computed(() => !!productBeingEdited.value)
 </script>
 
 <template>
@@ -149,7 +142,6 @@ onMounted(async () => {
             <td>{{ getCategoryName(product.categoryId) }}</td>
             <td class="actions">
               <button class="btn btn-secondary" @click="openEditModal(product)">编辑</button>
-              <!-- 5. 将“删除”按钮的点击事件绑定到 openDeleteConfirm 函数 -->
               <button class="btn btn-danger" @click="openDeleteConfirm(product)">删除</button>
             </td>
           </tr>
@@ -166,7 +158,6 @@ onMounted(async () => {
     </div>
   </div>
 
-  <!-- 添加/编辑商品的表单模态框 -->
   <ProductFormModal
     :show="isFormModalVisible"
     :categories="categories"
@@ -175,7 +166,6 @@ onMounted(async () => {
     @submit="handleFormSubmit"
   />
 
-  <!-- 6. 添加删除确认模态框 -->
   <ConfirmationModal
     :show="isDeleteConfirmVisible"
     title="确认删除"
@@ -186,7 +176,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* 所有样式保持不变 */
+/* 样式保持不变 */
 .product-management {
   background-color: #fff;
   padding: 20px;

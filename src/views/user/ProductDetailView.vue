@@ -19,6 +19,7 @@ const notificationStore = useNotificationStore()
 const product = ref(null)
 const isLoading = ref(true)
 const isAdding = ref(false) // 用于防止重复点击“加入购物车”
+const quantity = ref(1) // 新增：用于控制商品数量
 
 onMounted(async () => {
   const productId = route.params.id
@@ -47,8 +48,8 @@ const handleAddToCart = async () => {
 
   isAdding.value = true
   try {
-    // 调用 API 将商品加入购物车
-    const updatedCart = await api.addToCart(product.value.id, 1) // 默认添加数量为 1
+    // 调用 API 将商品加入购物车，使用 ref 中的数量
+    const updatedCart = await api.addToCart(product.value.id, quantity.value)
 
     // 使用返回的最新购物车数据更新 cart store
     cartStore.setCart(updatedCart)
@@ -73,14 +74,27 @@ const handleAddToCart = async () => {
 
       <div v-else-if="product" class="product-content">
         <div class="product-image">
-          <img :src="product.imageUrl" :alt="product.name" />
+          <!-- API返回的是一个imageUrls数组，我们显示第一张图片 -->
+          <img
+            :src="product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : ''"
+            :alt="product.name"
+          />
         </div>
         <div class="product-info">
           <h1>{{ product.name }}</h1>
           <p class="price">¥ {{ product.price.toFixed(2) }}</p>
           <p class="description">
-            这是一个商品的详细描述。采用高品质材料制成，设计现代，性能卓越，是您的不二之选。
+            {{ product.description }}
           </p>
+
+          <!-- 新增：数量选择器 -->
+          <div class="quantity-selector">
+            <label for="quantity">数量：</label>
+            <button @click="quantity > 1 ? quantity-- : null" class="quantity-btn">-</button>
+            <input type="number" id="quantity" v-model.number="quantity" min="1" />
+            <button @click="quantity++" class="quantity-btn">+</button>
+          </div>
+
           <!-- 
             将按钮的 disabled 状态与 isAdding 绑定。
             按钮的文本也会根据 isAdding 的状态变化。
@@ -88,6 +102,19 @@ const handleAddToCart = async () => {
           <button @click="handleAddToCart" class="add-to-cart-btn" :disabled="isAdding">
             {{ isAdding ? '正在添加...' : '加入购物车' }}
           </button>
+
+          <!-- 新增：商品规格参数表格 -->
+          <div v-if="product.specs && Object.keys(product.specs).length > 0" class="product-specs">
+            <h2>商品规格</h2>
+            <table>
+              <tbody>
+                <tr v-for="(value, key) in product.specs" :key="key">
+                  <td class="spec-key">{{ key }}</td>
+                  <td class="spec-value">{{ value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -100,7 +127,6 @@ const handleAddToCart = async () => {
 </template>
 
 <style scoped>
-/* ... 样式保持不变 ... */
 .add-to-cart-btn:disabled {
   background-color: #a5a5a5;
   cursor: not-allowed;
@@ -152,6 +178,34 @@ const handleAddToCart = async () => {
   color: #555;
   margin-bottom: 30px;
 }
+/* 新增：数量选择器样式 */
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 10px;
+}
+.quantity-selector label {
+  font-size: 16px;
+  color: #333;
+}
+.quantity-selector input {
+  width: 60px;
+  text-align: center;
+  font-size: 16px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.quantity-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  font-size: 18px;
+}
+
 .add-to-cart-btn {
   display: inline-block;
   padding: 15px 30px;
@@ -166,5 +220,28 @@ const handleAddToCart = async () => {
 }
 .add-to-cart-btn:hover {
   background-color: #0056b3;
+}
+/* 新增：规格表格样式 */
+.product-specs {
+  margin-top: 40px;
+}
+.product-specs h2 {
+  font-size: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+.product-specs table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.product-specs td {
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.spec-key {
+  font-weight: bold;
+  color: #555;
+  width: 120px;
 }
 </style>

@@ -12,8 +12,8 @@ const isRegisterMode = ref(false)
 
 // 表单数据模型
 const form = ref({
-  name: '',
-  email: 'test@example.com', // 预填方便测试
+  username: 'testUser', // 预填方便测试
+  email: 'test@example.com',
   password: 'password123',
 })
 
@@ -25,15 +25,23 @@ const handleSubmit = async () => {
   try {
     if (isRegisterMode.value) {
       // --- 注册逻辑 ---
-      await api.register(form.value)
+      await api.register({
+        username: form.value.username,
+        email: form.value.email,
+        password: form.value.password,
+      })
       // 注册成功后，自动切换到登录模式并提示用户
       isRegisterMode.value = false
       alert('注册成功，请登录！') // 临时使用 alert，后续会替换为全局通知
     } else {
       // --- 登录逻辑 ---
-      const response = await api.login(form.value)
+      const response = await api.login({
+        username: form.value.username,
+        password: form.value.password,
+      })
       // 调用 user store 的 action 来更新全局状态
-      userStore.setUser(response.token, response.user)
+      // API返回的数据在 response.userInfo 中
+      userStore.setUser(response.token, response.userInfo)
       // 登录成功后，跳转回首页
       router.push({ name: 'home' })
     }
@@ -48,19 +56,22 @@ const handleSubmit = async () => {
     <div class="auth-container">
       <h1>{{ isRegisterMode ? '创建账户' : '欢迎回来' }}</h1>
       <form @submit.prevent="handleSubmit">
-        <!-- 注册模式下显示姓名输入框 -->
-        <div v-if="isRegisterMode" class="form-group">
-          <label for="name">姓名</label>
-          <input type="text" id="name" v-model="form.name" required />
-        </div>
         <div class="form-group">
+          <label for="username">用户名</label>
+          <input type="text" id="username" v-model="form.username" required />
+        </div>
+
+        <!-- 仅在注册模式下显示邮箱输入框 -->
+        <div v-if="isRegisterMode" class="form-group">
           <label for="email">邮箱</label>
           <input type="email" id="email" v-model="form.email" required />
         </div>
+
         <div class="form-group">
           <label for="password">密码</label>
           <input type="password" id="password" v-model="form.password" required />
         </div>
+
         <!-- 显示错误信息 -->
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
         <button type="submit" class="submit-btn">

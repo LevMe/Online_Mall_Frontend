@@ -16,6 +16,7 @@ const showLogoutConfirm = ref(false)
 onMounted(async () => {
   if (userStore.isLoggedIn) {
     try {
+      // 登录后，应从后端获取购物车数据
       const cartData = await api.getCart()
       cartStore.setCart(cartData)
     } catch (error) {
@@ -51,15 +52,13 @@ const confirmLogout = () => {
         <RouterLink to="/">CoolStore</RouterLink>
       </div>
 
-      <!-- 分类导航已移除 -->
-
       <form class="search-bar" @submit.prevent="handleSearch">
         <input type="text" placeholder="搜索商品..." v-model="searchKeyword" />
       </form>
 
       <div class="user-area">
         <div v-if="userStore.isLoggedIn" class="user-profile">
-          <span>欢迎, {{ userStore.userInfo?.name }}</span>
+          <span>欢迎, {{ userStore.userInfo?.username }}</span>
           <a href="#" @click.prevent="handleLogoutClick" class="logout-btn">退出</a>
           <RouterLink :to="{ name: 'cart' }" class="cart-icon">
             🛒<span v-if="cartStore.totalItems > 0">{{ cartStore.totalItems }}</span>
@@ -77,18 +76,16 @@ const confirmLogout = () => {
     title="确认退出"
     message="您确定要退出当前账户吗？"
     @confirm="confirmLogout"
-    @cancel="showLogoutConfirm.value = false"
+    @cancel="showLogoutConfirm = false"
   />
 </template>
 
 <style scoped>
-/* 样式基本不变，微调 search-bar 的 margin */
 .search-bar {
   flex-grow: 1;
   margin: 0 50px; /* 调整左右边距 */
 }
 
-/* --- 以下为原有样式 --- */
 .user-area a {
   margin-left: 15px;
   text-decoration: none;
@@ -146,5 +143,12 @@ const confirmLogout = () => {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
+}
+
+.login-btn {
+  color: white;
+}
+.login-btn:hover {
+  background-color: #ffffff;
 }
 </style>

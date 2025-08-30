@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { api } from '../../services/index.js'
 import { useCartStore } from '../../store/cart.js'
 import { useNotificationStore } from '../../store/notification.js'
@@ -19,30 +19,42 @@ onMounted(async () => {
     cartStore.setCart(cartData)
   } catch (error) {
     console.error('获取购物车失败:', error)
+    notificationStore.showNotification(error.message || '获取购物车失败', 'error')
   }
 })
 
+// 更新购物车数据并通知用户的辅助函数
+const refreshCart = async () => {
+  try {
+    const cartData = await api.getCart()
+    cartStore.setCart(cartData)
+  } catch (error) {
+    notificationStore.showNotification('刷新购物车失败', 'error')
+  }
+}
+
 // 处理数量变更的函数
 const handleUpdateQuantity = async (item, newQuantity) => {
-  // 确保数量至少为 1
   const quantity = Math.max(1, newQuantity)
   try {
-    const updatedCart = await api.updateCartItem(item.id, quantity)
-    cartStore.setCart(updatedCart)
+    // 调用更新接口
+    await api.updateCartItem(item.cartItemId, quantity)
+    // 更新成功后，重新获取整个购物车数据
+    await refreshCart()
     notificationStore.showNotification('购物车已更新', 'success')
   } catch (error) {
-    notificationStore.showNotification('更新失败', 'error')
+    notificationStore.showNotification(error.message || '更新失败', 'error')
   }
 }
 
 // 处理删除商品的函数
-const handleDeleteItem = async (itemId) => {
+const handleDeleteItem = async (cartItemId) => {
   try {
-    const updatedCart = await api.deleteCartItem(itemId)
-    cartStore.setCart(updatedCart)
+    await api.deleteCartItem(cartItemId)
+    await refreshCart()
     notificationStore.showNotification('商品已从购物车移除', 'success')
   } catch (error) {
-    notificationStore.showNotification('移除失败', 'error')
+    notificationStore.showNotification(error.message || '移除失败', 'error')
   }
 }
 
@@ -52,14 +64,14 @@ const handleCheckout = async () => {
   isCheckingOut.value = true
 
   try {
-    // 调用结算 API
+    // 调用结算 API (当前为模拟)
     await api.checkout()
     // 清空前端 Pinia store 中的购物车
     cartStore.clearCart()
     // 跳转到成功页面
     router.push({ name: 'checkoutSuccess' })
   } catch (error) {
-    notificationStore.showNotification('结算失败，请稍后再试', 'error')
+    notificationStore.showNotification(error.message || '结算失败，请稍后再试', 'error')
   } finally {
     isCheckingOut.value = false
   }
@@ -70,15 +82,16 @@ const handleCheckout = async () => {
   <main class="cart-page">
     <div class="container">
       <h1>我的购物车</h1>
-      <!-- 当购物车不为空时 -->
+      <!-- 根据 store 中的 items 长度判断 -->
       <div v-if="cartStore.items.length > 0" class="cart-content">
         <div class="cart-items">
           <!-- 遍历购物车商品 -->
-          <div v-for="item in cartStore.items" :key="item.id" class="cart-item">
-            <img :src="item.product.imageUrl" :alt="item.product.name" class="item-image" />
+          <div v-for="item in cartStore.items" :key="item.cartItemId" class="cart-item">
+            <!-- 数据字段名与 API 保持一致 -->
+            <img :src="item.imageUrl" :alt="item.name" class="item-image" />
             <div class="item-details">
-              <h3>{{ item.product.name }}</h3>
-              <p class="item-price">¥ {{ item.product.price.toFixed(2) }}</p>
+              <h3>{{ item.name }}</h3>
+              <p class="item-price">¥ {{ item.price.toFixed(2) }}</p>
             </div>
             <div class="item-quantity">
               <input
@@ -88,17 +101,17 @@ const handleCheckout = async () => {
                 min="1"
               />
             </div>
-            <div class="item-total">¥ {{ (item.product.price * item.quantity).toFixed(2) }}</div>
-            <button @click="handleDeleteItem(item.id)" class="delete-btn">×</button>
+            <div class="item-total">¥ {{ (item.price * item.quantity).toFixed(2) }}</div>
+            <button @click="handleDeleteItem(item.cartItemId)" class="delete-btn">×</button>
           </div>
         </div>
         <div class="cart-summary">
           <h2>订单摘要</h2>
           <div class="summary-row">
             <span>商品总计</span>
+            <!-- 直接使用 store 中的 totalPrice -->
             <span>¥ {{ cartStore.totalPrice.toFixed(2) }}</span>
           </div>
-          <!-- 将按钮的点击事件和禁用状态绑定 -->
           <button @click="handleCheckout" :disabled="isCheckingOut" class="checkout-btn">
             {{ isCheckingOut ? '正在处理...' : '前往结算' }}
           </button>
@@ -120,7 +133,7 @@ const handleCheckout = async () => {
   min-height: calc(100vh - 140px);
 }
 .container {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -130,6 +143,7 @@ h1 {
 .cart-content {
   display: flex;
   gap: 30px;
+  align-items: flex-start;
 }
 .cart-items {
   flex: 3;
@@ -185,7 +199,9 @@ h1 {
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
-  height: fit-content; /* 高度自适应内容 */
+  height: fit-content;
+  position: sticky;
+  top: 40px;
 }
 .summary-row {
   display: flex;

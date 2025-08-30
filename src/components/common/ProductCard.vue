@@ -20,7 +20,7 @@ defineProps({
     <div class="product-card">
       <div class="card-image">
         <img
-          :src="product.imageUrl"
+          :src="product.mainImageUrl"
           :alt="product.name"
           onerror="this.onerror=null;this.src='https://placehold.co/300x300/EFEFEF/333?text=Image+Error';"
         />

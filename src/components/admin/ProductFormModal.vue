@@ -1,55 +1,59 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 
-// --- Props & Emits ---
 const props = defineProps({
   show: { type: Boolean, default: false },
   categories: { type: Array, required: true },
-  // 1. 新增 prop：用于接收待编辑的商品对象
   productToEdit: { type: Object, default: null },
 })
 
 const emit = defineEmits(['close', 'submit'])
 
-// --- Computed Properties ---
-// 2. 根据是否存在 productToEdit 来判断当前是否为编辑模式
 const isEditMode = computed(() => !!props.productToEdit)
-// 3. 动态计算模态框的标题
 const modalTitle = computed(() => (isEditMode.value ? '编辑商品' : '添加新商品'))
-// 4. 动态计算提交按钮的文本
 const submitButtonText = computed(() => (isEditMode.value ? '更新' : '保存'))
 
-// --- 响应式状态 ---
 const form = ref({})
+const specsString = ref('') // 用于绑定 textarea 的响应式变量
 
-// --- 监听器 ---
-// 5. 监听 show prop 的变化，以便在模态框打开时设置表单的初始状态
+// 监听模态框的显示/隐藏
 watch(
   () => props.show,
   (newVal) => {
     if (newVal) {
       if (isEditMode.value) {
-        // 如果是编辑模式，用传入的商品数据填充表单 (创建副本以避免直接修改 prop)
+        // 编辑模式：用传入的数据填充表单
         form.value = { ...props.productToEdit }
+        // 将 specs 对象转换为格式化的 JSON 字符串
+        specsString.value = props.productToEdit.specs
+          ? JSON.stringify(props.productToEdit.specs, null, 2)
+          : ''
       } else {
-        // 如果是添加模式，重置表单为初始空状态
+        // 添加模式：重置为空表单
         form.value = {
           name: '',
           price: null,
           stock: null,
           categoryId: null,
-          imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=New+Product',
+          description: '',
+          mainImageUrl: 'https://placehold.co/600x400/EFEFEF/333?text=New+Product',
         }
+        specsString.value = ''
       }
     }
   },
 )
 
-// --- 方法 ---
 const handleSubmit = () => {
-  if (form.value.name && form.value.price && form.value.categoryId) {
-    // 提交时，将表单数据和当前是否为编辑模式的信息一起传递出去
-    emit('submit', form.value)
+  if (form.value.name && form.value.price != null && form.value.categoryId != null) {
+    const finalData = { ...form.value }
+    try {
+      // 尝试将 specs 字符串解析回 JSON 对象
+      finalData.specs = specsString.value ? JSON.parse(specsString.value) : null
+      emit('submit', finalData)
+    } catch (error) {
+      alert('商品规格的JSON格式不正确，请检查！')
+    }
   } else {
     alert('请填写所有必填项！')
   }
@@ -61,24 +65,26 @@ const handleSubmit = () => {
     <div v-if="show" class="modal-wrapper">
       <div class="modal-overlay" @click="emit('close')"></div>
       <div class="modal-content">
-        <!-- 使用动态标题 -->
         <h3>{{ modalTitle }}</h3>
         <form @submit.prevent="handleSubmit">
-          <!-- 表单结构保持不变 -->
           <div class="form-group">
-            <label for="name">商品名称</label>
+            <label for="name">商品名称 *</label>
             <input type="text" id="name" v-model="form.name" required />
           </div>
-          <div class="form-group">
-            <label for="price">价格</label>
-            <input type="number" id="price" v-model.number="form.price" required min="0" />
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="price">价格 *</label>
+              <input type="number" id="price" v-model.number="form.price" required min="0" />
+            </div>
+            <div class="form-group">
+              <label for="stock">库存 *</label>
+              <input type="number" id="stock" v-model.number="form.stock" required min="0" />
+            </div>
           </div>
+
           <div class="form-group">
-            <label for="stock">库存</label>
-            <input type="number" id="stock" v-model.number="form.stock" required min="0" />
-          </div>
-          <div class="form-group">
-            <label for="category">分类</label>
+            <label for="category">分类 *</label>
             <select id="category" v-model.number="form.categoryId" required>
               <option :value="null" disabled>请选择一个分类</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">
@@ -86,9 +92,24 @@ const handleSubmit = () => {
               </option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label for="mainImageUrl">主图 URL</label>
+            <input type="text" id="mainImageUrl" v-model="form.mainImageUrl" />
+          </div>
+
+          <div class="form-group">
+            <label for="description">商品描述</label>
+            <textarea id="description" v-model="form.description" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="specs">商品规格 (JSON格式)</label>
+            <textarea id="specs" v-model="specsString" rows="4"></textarea>
+          </div>
+
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" @click="emit('close')">取消</button>
-            <!-- 使用动态按钮文本 -->
             <button type="submit" class="btn btn-primary">{{ submitButtonText }}</button>
           </div>
         </form>
@@ -98,7 +119,6 @@ const handleSubmit = () => {
 </template>
 
 <style scoped>
-/* 样式保持不变 */
 .modal-wrapper {
   position: fixed;
   top: 0;
@@ -120,7 +140,7 @@ const handleSubmit = () => {
 }
 .modal-content {
   position: relative;
-  width: 500px;
+  width: 550px;
   padding: 20px 30px;
   background-color: #fff;
   border-radius: 8px;
@@ -137,12 +157,21 @@ const handleSubmit = () => {
   margin-bottom: 5px;
 }
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
+  font-family: inherit;
+}
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+.form-row .form-group {
+  flex: 1;
 }
 .modal-actions {
   display: flex;
