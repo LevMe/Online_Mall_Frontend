@@ -12,6 +12,8 @@ import CartView from '../views/user/CartView.vue'
 import CheckoutSuccessView from '../views/user/CheckoutSuccessView.vue'
 import AdminLayout from '../components/layout/AdminLayout.vue'
 import ProductManagementView from '../views/admin/ProductManagementView.vue'
+import UserSupportView from '@/views/user/UserSupportView.vue'
+import OrderView from '@/views/user/OrderView.vue'
 
 const routes = [
   // --- 用户前台路由 ---
@@ -19,6 +21,13 @@ const routes = [
   { path: '/products', name: 'productList', component: ProductListView },
   { path: '/product/:id', name: 'productDetail', component: ProductDetailView },
   { path: '/auth', name: 'auth', component: AuthView },
+  { path: '/user-support', name: 'user-support', component: UserSupportView },
+  {
+    path: '/orders',
+    name: 'orders',
+    component: OrderView,
+    meta: { requiresAuth: true }, // 需要登录才能访问
+  },
   {
     path: '/cart',
     name: 'cart',
