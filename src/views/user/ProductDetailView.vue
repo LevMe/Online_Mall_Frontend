@@ -59,7 +59,7 @@ const handleAddToCart = async () => {
   } catch (error) {
     console.error('添加购物车失败:', error)
     // 显示失败通知
-    notificationStore.showNotification('添加失败，请稍后再试', 'error')
+    notificationStore.showNotification(`添加失败: ${error.message || error}`, 'error')
   } finally {
     // 无论成功或失败，操作完成后都将 isAdding 状态重置
     isAdding.value = false
