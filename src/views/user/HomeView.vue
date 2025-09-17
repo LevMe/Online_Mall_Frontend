@@ -8,8 +8,10 @@ const products = ref([])
 
 onMounted(async () => {
   try {
-    const data = await api.getProducts()
-    products.value = data
+    // 主页默认请求第一页
+    const data = await api.getProducts({ pageNo: 1 })
+    // 从返回的分页对象中获取商品列表
+    products.value = data.items
   } catch (error) {
     console.error('获取商品失败:', error)
   }

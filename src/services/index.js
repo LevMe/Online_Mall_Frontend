@@ -50,7 +50,8 @@ apiClient.interceptors.response.use(
 export const api = {
   // --- 商品与分类 ---
   getProducts: (params = {}) => {
-    return apiClient.get('/products', { params }).then((data) => data.items || []) // 保证返回的是数组
+    // 将返回的数据结构从 items 数组调整为完整的响应对象
+    return apiClient.get('/products', { params })
   },
   getCategories: () => {
     return apiClient.get('/categories')
