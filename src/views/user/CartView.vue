@@ -64,12 +64,13 @@ const handleCheckout = async () => {
   isCheckingOut.value = true
 
   try {
-    // 调用结算 API (当前为模拟)
-    await api.checkout()
-    // 清空前端 Pinia store 中的购物车
+    // 调用创建订单 API
+    await api.createOrder()
+    // 订单创建成功后，后端会自动清空购物车，前端也需要同步状态
     cartStore.clearCart()
     // 跳转到成功页面
     router.push({ name: 'checkoutSuccess' })
+    notificationStore.showNotification('订单创建成功！', 'success')
   } catch (error) {
     notificationStore.showNotification(error.message || '结算失败，请稍后再试', 'error')
   } finally {

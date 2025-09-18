@@ -84,6 +84,14 @@ export const api = {
     })
   },
 
+  // --- 订单 ---
+  createOrder: () => {
+    return apiClient.post('/orders')
+  },
+  getOrders: () => {
+    return apiClient.get('/orders')
+  },
+
   // --- 结算 (模拟) ---
   checkout: () => {
     console.warn('调用了模拟的 checkout API。请与后端确认实际接口。')
