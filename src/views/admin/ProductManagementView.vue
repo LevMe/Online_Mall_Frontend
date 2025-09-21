@@ -22,6 +22,10 @@ const itemsPerPage = ref(10)
 // --- 计算属性 ---
 const totalPages = computed(() => Math.ceil(allProducts.value.length / itemsPerPage.value))
 const paginatedProducts = computed(() => {
+  // 【关键修正点】确保 allProducts.value 是一个数组
+  if (!Array.isArray(allProducts.value)) {
+    return []
+  }
   const start = (currentPage.value - 1) * itemsPerPage.value
   return allProducts.value.slice(start, start + itemsPerPage.value)
 })
@@ -94,12 +98,13 @@ const goToPage = (page) => {
 // --- 生命周期钩子 ---
 onMounted(async () => {
   try {
-    // 并行获取商品和分类数据
-    const [productsData, categoriesData] = await Promise.all([
-      api.getProducts(),
+    // 【关键修正点】并行获取所有商品 (通过设置一个很大的 pageSize) 和分类数据
+    const [productsResponse, categoriesData] = await Promise.all([
+      api.getProducts({ pageSize: 9999 }), // 请求足够多的数据
       api.getCategories(),
     ])
-    allProducts.value = productsData
+    // 【关键修正点】从返回的对象中只取 items 数组
+    allProducts.value = productsResponse.items
     categories.value = categoriesData
   } catch (error) {
     notificationStore.showNotification(error.message || '获取数据失败', 'error')
@@ -121,7 +126,7 @@ const isEditMode = computed(() => !!productBeingEdited.value)
 
     <div v-if="isLoading" class="loading-state">正在加载...</div>
 
-    <div velse class="table-container">
+    <div v-else class="table-container">
       <table>
         <thead>
           <tr>
