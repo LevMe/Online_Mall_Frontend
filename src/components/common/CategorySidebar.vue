@@ -24,10 +24,19 @@ onMounted(async () => {
           :to="{ name: 'productList' }"
           :class="{
             'is-active':
-              (route.name === 'productList' && !route.query.categoryId) || route.name === 'home',
+              (route.name === 'productList' && !route.query.categoryId && !route.query.recommend) ||
+              route.name === 'home',
           }"
         >
           全部商品
+        </RouterLink>
+      </li>
+      <li>
+        <RouterLink
+          :to="{ name: 'productList', query: { recommend: true } }"
+          :class="{ 'is-active': route.query.recommend }"
+        >
+          推荐商品
         </RouterLink>
       </li>
       <li v-for="category in categories" :key="category.id">

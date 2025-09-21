@@ -15,14 +15,27 @@ const router = useRouter()
 
 const fetchProducts = async (query) => {
   try {
-    const data = await api.getProducts(query)
-    products.value = data.items
-    totalPages.value = Math.ceil(data.total / data.pageSize)
-    currentPage.value = data.page
-    pageSize.value = data.pageSize
+    let data
+    if (query.recommend) {
+      data = await api.getRecommendations({ pageSize: pageSize.value })
+      // The recommendations endpoint returns an array directly, not a paginated object.
+      products.value = data
+      totalPages.value = 1
+      currentPage.value = 1
+    } else {
+      data = await api.getProducts(query)
+      products.value = data.items
+      totalPages.value = Math.ceil(data.total / data.pageSize)
+      currentPage.value = data.page
+      pageSize.value = data.pageSize
+    }
   } catch (error) {
     console.error('获取商品列表失败:', error)
   }
+}
+
+const refreshRecommendations = async () => {
+  await fetchProducts({ recommend: true })
 }
 
 const goToPage = (page) => {
@@ -47,6 +60,8 @@ const visiblePageNumbers = computed(() => {
   return pages
 })
 
+const isRecommendPage = computed(() => route.query.recommend)
+
 watch(
   () => route.query,
   (newQuery) => {
@@ -65,6 +80,10 @@ watch(
       <CategorySidebar />
       <div class="main-content">
         <h1 v-if="route.query.keyword">搜索结果: "{{ route.query.keyword }}"</h1>
+        <div v-if="isRecommendPage" class="recommend-header">
+          <h1>推荐商品</h1>
+          <button @click="refreshRecommendations" class="refresh-btn">刷新推荐</button>
+        </div>
 
         <div v-if="products.length > 0" class="product-grid">
           <ProductCard v-for="product in products" :key="product.id" :product="product" />
@@ -73,7 +92,7 @@ watch(
           <p>抱歉，没有找到相关的商品。</p>
         </div>
 
-        <nav v-if="totalPages > 1" class="pagination" aria-label="商品分页">
+        <nav v-if="totalPages > 1 && !isRecommendPage" class="pagination" aria-label="商品分页">
           <button
             @click="goToPage(currentPage - 1)"
             :disabled="currentPage === 1"
@@ -137,6 +156,28 @@ h1 {
   color: #666;
   background-color: #fff;
   border-radius: 8px;
+}
+
+.recommend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  border: 1px solid #007aff;
+  background-color: #fff;
+  color: #007aff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.refresh-btn:hover {
+  background-color: #007aff;
+  color: #fff;
 }
 
 /* --- 全新的分页组件样式 (Apple 风格) --- */

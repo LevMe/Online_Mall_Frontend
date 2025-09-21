@@ -53,6 +53,9 @@ export const api = {
     // 将返回的数据结构从 items 数组调整为完整的响应对象
     return apiClient.get('/products', { params })
   },
+  getRecommendations: (params = {}) => {
+    return apiClient.get('/products/recommendations', { params })
+  },
   getCategories: () => {
     return apiClient.get('/categories')
   },
