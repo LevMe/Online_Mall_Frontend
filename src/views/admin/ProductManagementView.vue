@@ -1,4 +1,5 @@
 <script setup>
+// ... (保留所有已有的响应式状态和方法)
 import { ref, onMounted, computed } from 'vue'
 import { api } from '../../services/index.js'
 import ProductFormModal from '../../components/admin/ProductFormModal.vue'
@@ -18,19 +19,44 @@ const productToDelete = ref(null)
 // --- 分页状态 ---
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const totalProducts = ref(0) // 新增：用于存储总数
 
 // --- 计算属性 ---
-const totalPages = computed(() => Math.ceil(allProducts.value.length / itemsPerPage.value))
-const paginatedProducts = computed(() => {
-  // 【关键修正点】确保 allProducts.value 是一个数组
-  if (!Array.isArray(allProducts.value)) {
-    return []
-  }
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  return allProducts.value.slice(start, start + itemsPerPage.value)
-})
+const totalPages = computed(() => Math.ceil(totalProducts.value / itemsPerPage.value))
+// paginatedProducts 现在直接使用 allProducts，因为数据已经是分页好的
+const paginatedProducts = computed(() => allProducts.value)
 
 // --- 方法 ---
+const fetchProducts = async (page) => {
+  isLoading.value = true
+  try {
+    const [productsResponse, categoriesData] = await Promise.all([
+      api.getAdminProducts({ pageNo: page, pageSize: itemsPerPage.value }), // 调用正确的API
+      api.getCategories(),
+    ])
+    allProducts.value = productsResponse.items
+    totalProducts.value = productsResponse.total // 更新总数
+    categories.value = categoriesData
+  } catch (error) {
+    notificationStore.showNotification(error.message || '获取数据失败', 'error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+    fetchProducts(page) // 翻页时重新获取数据
+  }
+}
+
+// --- 生命周期钩子 ---
+onMounted(() => {
+  fetchProducts(currentPage.value) // 页面加载时获取第一页数据
+})
+
+// ... (保留 handleFormSubmit, openDeleteConfirm 等其他方法)
 const openAddModal = () => {
   productBeingEdited.value = null
   isFormModalVisible.value = true
@@ -45,22 +71,18 @@ const handleFormSubmit = async (productData) => {
   try {
     if (isEditMode.value) {
       // 编辑模式
-      const updatedProduct = await api.updateProduct(productBeingEdited.value.id, productData)
-      const index = allProducts.value.findIndex((p) => p.id === updatedProduct.id)
-      if (index !== -1) {
-        allProducts.value.splice(index, 1, updatedProduct)
-      }
+      await api.updateProduct(productBeingEdited.value.id, productData)
       notificationStore.showNotification('商品更新成功！', 'success')
     } else {
       // 添加模式
-      const newProduct = await api.addProduct(productData)
-      allProducts.value.unshift(newProduct)
+      await api.addProduct(productData)
       notificationStore.showNotification('商品添加成功！', 'success')
     }
   } catch (error) {
     notificationStore.showNotification(error.message || '操作失败，请重试', 'error')
   } finally {
     isFormModalVisible.value = false
+    fetchProducts(currentPage.value) // 重新加载当前页数据
   }
 }
 
@@ -74,13 +96,13 @@ const handleConfirmDelete = async () => {
 
   try {
     await api.deleteProduct(productToDelete.value.id)
-    allProducts.value = allProducts.value.filter((p) => p.id !== productToDelete.value.id)
     notificationStore.showNotification('商品删除成功！', 'success')
   } catch (error) {
     notificationStore.showNotification(error.message || '删除失败，请重试', 'error')
   } finally {
     isDeleteConfirmVisible.value = false
     productToDelete.value = null
+    fetchProducts(currentPage.value) // 重新加载当前页数据
   }
 }
 
@@ -89,31 +111,6 @@ const getCategoryName = (categoryId) => {
   return category ? category.name : '未分类'
 }
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
-
-// --- 生命周期钩子 ---
-onMounted(async () => {
-  try {
-    // 【关键修正点】并行获取所有商品 (通过设置一个很大的 pageSize) 和分类数据
-    const [productsResponse, categoriesData] = await Promise.all([
-      api.getProducts({ pageSize: 9999 }), // 请求足够多的数据
-      api.getCategories(),
-    ])
-    // 【关键修正点】从返回的对象中只取 items 数组
-    allProducts.value = productsResponse.items
-    categories.value = categoriesData
-  } catch (error) {
-    notificationStore.showNotification(error.message || '获取数据失败', 'error')
-  } finally {
-    isLoading.value = false
-  }
-})
-
-// --- 辅助计算属性 ---
 const isEditMode = computed(() => !!productBeingEdited.value)
 </script>
 

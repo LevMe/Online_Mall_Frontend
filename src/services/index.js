@@ -106,6 +106,10 @@ export const api = {
   },
 
   // --- 管理员模块 ---
+  getAdminProducts: (params = {}) => {
+    // 新增
+    return apiClient.get('/admin/products', { params })
+  },
   addProduct: (productData) => {
     return apiClient.post('/admin/products', productData)
   },
