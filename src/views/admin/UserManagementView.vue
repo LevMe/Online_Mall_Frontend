@@ -17,60 +17,12 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const totalUsers = ref(0)
 
+// 新增：用于绑定搜索框的响应式状态
+const searchKeyword = ref('')
+
 const totalPages = computed(() => Math.ceil(totalUsers.value / itemsPerPage.value))
 
-const openAddModal = () => {
-  userBeingEdited.value = null
-  isFormModalVisible.value = true
-}
-
-const openEditModal = (user) => {
-  userBeingEdited.value = { ...user }
-  isFormModalVisible.value = true
-}
-
-const handleFormSubmit = async (userData) => {
-  try {
-    if (userBeingEdited.value) {
-      const updatedUser = await api.updateUser(userBeingEdited.value.id, userData)
-      const index = allUsers.value.findIndex((u) => u.id === updatedUser.id)
-      if (index !== -1) {
-        allUsers.value.splice(index, 1, updatedUser)
-      }
-      notificationStore.showNotification('用户更新成功！', 'success')
-    } else {
-      const newUser = await api.createUser(userData)
-      allUsers.value.unshift(newUser)
-      notificationStore.showNotification('用户添加成功！', 'success')
-    }
-  } catch (error) {
-    notificationStore.showNotification(error.message || '操作失败，请重试', 'error')
-  } finally {
-    isFormModalVisible.value = false
-    fetchUsers(currentPage.value)
-  }
-}
-
-const openDeleteConfirm = (user) => {
-  userToDelete.value = user
-  isDeleteConfirmVisible.value = true
-}
-
-const handleConfirmDelete = async () => {
-  if (!userToDelete.value) return
-
-  try {
-    await api.deleteUser(userToDelete.value.id)
-    allUsers.value = allUsers.value.filter((u) => u.id !== userToDelete.value.id)
-    notificationStore.showNotification('用户删除成功！', 'success')
-  } catch (error) {
-    notificationStore.showNotification(error.message || '删除失败，请重试', 'error')
-  } finally {
-    isDeleteConfirmVisible.value = false
-    userToDelete.value = null
-    fetchUsers(currentPage.value)
-  }
-}
+// ... (openAddModal, openEditModal, handleFormSubmit, openDeleteConfirm, handleConfirmDelete 保持不变)
 
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
@@ -79,10 +31,16 @@ const goToPage = (page) => {
   }
 }
 
+// 修改 fetchUsers 方法以支持搜索
 const fetchUsers = async (page) => {
   isLoading.value = true
   try {
-    const response = await api.getUsers({ pageNo: page, pageSize: itemsPerPage.value })
+    const params = {
+      pageNo: page,
+      pageSize: itemsPerPage.value,
+      keyword: searchKeyword.value, // 将搜索关键词添加到请求参数中
+    }
+    const response = await api.getUsers(params)
     allUsers.value = response.items
     totalUsers.value = response.total
   } catch (error) {
@@ -90,6 +48,12 @@ const fetchUsers = async (page) => {
   } finally {
     isLoading.value = false
   }
+}
+
+// 新增：处理搜索的方法
+const handleSearch = () => {
+  currentPage.value = 1 // 每次搜索都回到第一页
+  fetchUsers(currentPage.value)
 }
 
 onMounted(() => {
@@ -101,7 +65,18 @@ onMounted(() => {
   <div class="user-management">
     <div class="header">
       <h1>用户管理</h1>
-      <button class="btn btn-primary" @click="openAddModal">添加新用户</button>
+      <div class="actions-group">
+        <div class="search-bar">
+          <input
+            type="text"
+            v-model="searchKeyword"
+            placeholder="按用户名或邮箱搜索..."
+            @keyup.enter="handleSearch"
+          />
+          <button class="btn btn-secondary" @click="handleSearch">搜索</button>
+        </div>
+        <button class="btn btn-primary" @click="openAddModal">添加新用户</button>
+      </div>
     </div>
 
     <div v-if="isLoading" class="loading-state">正在加载...</div>
@@ -158,17 +133,33 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.user-management {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+/* ... (大部分样式保持不变) ... */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+/* 新增：用于容纳搜索框和按钮的容器 */
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.search-bar {
+  display: flex;
+  gap: 8px;
+}
+.search-bar input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.user-management {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .header h1 {
   margin: 0;

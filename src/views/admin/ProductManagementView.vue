@@ -1,12 +1,11 @@
 <script setup>
-// ... (保留所有已有的响应式状态和方法)
 import { ref, onMounted, computed } from 'vue'
 import { api } from '../../services/index.js'
 import ProductFormModal from '../../components/admin/ProductFormModal.vue'
 import { useNotificationStore } from '../../store/notification.js'
 import ConfirmationModal from '../../components/common/ConfirmationModal.vue'
 
-// --- 响应式状态 ---
+// ... (其他响应式状态保持不变)
 const allProducts = ref([])
 const categories = ref([])
 const isLoading = ref(true)
@@ -15,27 +14,33 @@ const notificationStore = useNotificationStore()
 const productBeingEdited = ref(null)
 const isDeleteConfirmVisible = ref(false)
 const productToDelete = ref(null)
-
-// --- 分页状态 ---
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
-const totalProducts = ref(0) // 新增：用于存储总数
+const totalProducts = ref(0)
 
-// --- 计算属性 ---
+// 新增：用于绑定搜索框的响应式状态
+const searchKeyword = ref('')
+
+// ... (计算属性和大部分方法保持不变)
 const totalPages = computed(() => Math.ceil(totalProducts.value / itemsPerPage.value))
-// paginatedProducts 现在直接使用 allProducts，因为数据已经是分页好的
 const paginatedProducts = computed(() => allProducts.value)
 
-// --- 方法 ---
+// 修改 fetchProducts 方法以支持搜索
 const fetchProducts = async (page) => {
   isLoading.value = true
   try {
+    const params = {
+      pageNo: page,
+      pageSize: itemsPerPage.value,
+      keyword: searchKeyword.value, // 将搜索关键词添加到请求参数中
+    }
+    // 使用 Promise.all 并行获取商品和分类数据
     const [productsResponse, categoriesData] = await Promise.all([
-      api.getAdminProducts({ pageNo: page, pageSize: itemsPerPage.value }), // 调用正确的API
+      api.getAdminProducts(params),
       api.getCategories(),
     ])
     allProducts.value = productsResponse.items
-    totalProducts.value = productsResponse.total // 更新总数
+    totalProducts.value = productsResponse.total
     categories.value = categoriesData
   } catch (error) {
     notificationStore.showNotification(error.message || '获取数据失败', 'error')
@@ -44,37 +49,40 @@ const fetchProducts = async (page) => {
   }
 }
 
+// 新增：处理搜索的方法
+const handleSearch = () => {
+  currentPage.value = 1 // 每次搜索都回到第一页
+  fetchProducts(currentPage.value)
+}
+
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
-    fetchProducts(page) // 翻页时重新获取数据
+    fetchProducts(page)
   }
 }
 
-// --- 生命周期钩子 ---
 onMounted(() => {
-  fetchProducts(currentPage.value) // 页面加载时获取第一页数据
+  fetchProducts(currentPage.value)
 })
 
-// ... (保留 handleFormSubmit, openDeleteConfirm 等其他方法)
+// ... (handleFormSubmit, openDeleteConfirm 等其他方法保持不变)
 const openAddModal = () => {
   productBeingEdited.value = null
   isFormModalVisible.value = true
 }
 
 const openEditModal = (product) => {
-  productBeingEdited.value = { ...product } // 传递副本以防意外修改
+  productBeingEdited.value = { ...product }
   isFormModalVisible.value = true
 }
 
 const handleFormSubmit = async (productData) => {
   try {
     if (isEditMode.value) {
-      // 编辑模式
       await api.updateProduct(productBeingEdited.value.id, productData)
       notificationStore.showNotification('商品更新成功！', 'success')
     } else {
-      // 添加模式
       await api.addProduct(productData)
       notificationStore.showNotification('商品添加成功！', 'success')
     }
@@ -82,7 +90,7 @@ const handleFormSubmit = async (productData) => {
     notificationStore.showNotification(error.message || '操作失败，请重试', 'error')
   } finally {
     isFormModalVisible.value = false
-    fetchProducts(currentPage.value) // 重新加载当前页数据
+    fetchProducts(currentPage.value)
   }
 }
 
@@ -102,7 +110,7 @@ const handleConfirmDelete = async () => {
   } finally {
     isDeleteConfirmVisible.value = false
     productToDelete.value = null
-    fetchProducts(currentPage.value) // 重新加载当前页数据
+    fetchProducts(currentPage.value)
   }
 }
 
@@ -118,7 +126,18 @@ const isEditMode = computed(() => !!productBeingEdited.value)
   <div class="product-management">
     <div class="header">
       <h1>商品管理</h1>
-      <button class="btn btn-primary" @click="openAddModal">添加新商品</button>
+      <div class="actions-group">
+        <div class="search-bar">
+          <input
+            type="text"
+            v-model="searchKeyword"
+            placeholder="按商品名称搜索..."
+            @keyup.enter="handleSearch"
+          />
+          <button class="btn btn-secondary" @click="handleSearch">搜索</button>
+        </div>
+        <button class="btn btn-primary" @click="openAddModal">添加新商品</button>
+      </div>
     </div>
 
     <div v-if="isLoading" class="loading-state">正在加载...</div>
@@ -178,18 +197,33 @@ const isEditMode = computed(() => !!productBeingEdited.value)
 </template>
 
 <style scoped>
-/* 样式保持不变 */
-.product-management {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+/* 使用与 UserManagementView.vue 相同的样式 */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.search-bar {
+  display: flex;
+  gap: 8px;
+}
+.search-bar input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.product-management {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .header h1 {
   margin: 0;
