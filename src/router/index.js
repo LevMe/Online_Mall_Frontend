@@ -12,6 +12,7 @@ import CartView from '../views/user/CartView.vue'
 import CheckoutSuccessView from '../views/user/CheckoutSuccessView.vue'
 import AdminLayout from '../components/layout/AdminLayout.vue'
 import ProductManagementView from '../views/admin/ProductManagementView.vue'
+import UserManagementView from '../views/admin/UserManagementView.vue'
 import UserSupportView from '@/views/user/UserSupportView.vue'
 import OrderView from '@/views/user/OrderView.vue'
 
@@ -52,6 +53,11 @@ const routes = [
         name: 'adminProductList',
         component: ProductManagementView,
       },
+      {
+        path: 'users',
+        name: 'adminUserList',
+        component: UserManagementView,
+      },
     ],
   },
 ]
@@ -74,11 +80,10 @@ router.beforeEach((to, from, next) => {
   else if (to.meta.requiresAdmin) {
     if (!userStore.isLoggedIn) {
       next({ name: 'auth' }) // 未登录，去登录
+    } else if (userStore.userInfo?.role !== 'ADMIN') {
+      console.warn('无管理员权限')
+      next({ name: 'home' })
     } else {
-      // TODO: 这里需要根据后端返回的用户信息判断角色
-      // 目前API的 a/auth/login 响应中 userInfo 不包含角色信息
-      // 暂时只判断是否登录
-      console.warn('管理员权限检查未完全实现，缺少用户角色信息。')
       next() // 已登录，暂时放行
     }
   }

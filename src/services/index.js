@@ -115,4 +115,16 @@ export const api = {
   deleteProduct: (productId) => {
     return apiClient.delete(`/admin/products/${productId}`)
   },
+  getUsers: (params = {}) => {
+    return apiClient.get('/admin/users', { params })
+  },
+  createUser: (userData) => {
+    return apiClient.post('/admin/users', userData)
+  },
+  updateUser: (userId, userData) => {
+    return apiClient.put(`/admin/users/${userId}`, userData)
+  },
+  deleteUser: (userId) => {
+    return apiClient.delete(`/admin/users/${userId}`)
+  },
 }

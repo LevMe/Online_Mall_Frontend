@@ -1,32 +1,79 @@
 <script setup>
-// 导入侧边栏组件
-import AdminSidebar from './AdminSidebar.vue'
+import { RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <div class="admin-layout">
-    <AdminSidebar />
-    <main class="admin-main-content">
-      <!-- 
-        和 App.vue 类似，这里也需要一个 router-view。
-        这个出口专门用于渲染 /admin/... 的子路由组件，
-        例如商品管理、用户管理等。
-      -->
-      <router-view></router-view>
-    </main>
-  </div>
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <h2>商城后台</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <RouterLink :to="{ name: 'adminProductList' }">商品管理</RouterLink>
+        </li>
+        <li>
+          <RouterLink :to="{ name: 'adminUserList' }">用户管理</RouterLink>
+        </li>
+        <li>
+          <RouterLink :to="{ name: 'home' }" class="back-to-store">返回商城</RouterLink>
+        </li>
+      </ul>
+    </nav>
+  </aside>
 </template>
 
 <style scoped>
-.admin-layout {
+.admin-sidebar {
+  width: 220px;
+  flex-shrink: 0; /* 防止侧边栏被压缩 */
+  background-color: #001529; /* 深蓝色，专业的后台风格 */
+  color: #fff;
   display: flex;
-  min-height: 100vh; /* 确保布局至少和视窗一样高 */
-  background-color: #f0f2f5; /* 后台系统常用的浅灰色背景 */
+  flex-direction: column;
 }
 
-.admin-main-content {
-  flex-grow: 1; /* 占据剩余的所有空间 */
-  padding: 30px;
-  overflow: auto; /* 如果内容超出，允许滚动 */
+.sidebar-header {
+  padding: 20px;
+  text-align: center;
+  font-size: 20px;
+  border-bottom: 1px solid #002140;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.sidebar-nav a {
+  display: block;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.sidebar-nav a:hover {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+/* 为当前激活的后台路由链接设置高亮样式 */
+.sidebar-nav a.router-link-active {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+.back-to-store {
+  margin-top: 40px; /* 与其他导航项拉开距离 */
+  border-top: 1px solid #002140;
+  padding-top: 20px !important;
 }
 </style>
