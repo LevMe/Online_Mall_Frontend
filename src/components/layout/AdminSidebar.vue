@@ -9,17 +9,15 @@ import { RouterLink } from 'vue-router'
     </div>
     <nav class="sidebar-nav">
       <ul>
-        <!-- 
-          使用 RouterLink 指向我们即将创建的后台路由。
-          注意：这里的 to 指向的是路由的 name，这是最佳实践。
-        -->
         <li>
           <RouterLink :to="{ name: 'adminProductList' }">商品管理</RouterLink>
         </li>
         <li>
+          <RouterLink :to="{ name: 'adminUserList' }">用户管理</RouterLink>
+        </li>
+        <li>
           <RouterLink :to="{ name: 'home' }" class="back-to-store">返回商城</RouterLink>
         </li>
-        <!-- 未来可以添加更多链接，如用户管理、订单管理等 -->
       </ul>
     </nav>
   </aside>

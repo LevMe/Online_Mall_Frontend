@@ -15,7 +15,8 @@ const showLogoutConfirm = ref(false)
 
 // 登录后获取购物车数据
 onMounted(async () => {
-  if (userStore.isLoggedIn) {
+  // 核心修改：增加一个条件，确保只有普通用户登录时才获取购物车信息
+  if (userStore.isLoggedIn && userStore.userInfo?.role !== 'ADMIN') {
     try {
       const cartData = await api.getCart()
       cartStore.setCart(cartData)
