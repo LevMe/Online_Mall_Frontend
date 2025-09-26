@@ -8,7 +8,7 @@ import CategorySidebar from '../../components/common/CategorySidebar.vue'
 const products = ref([])
 const totalPages = ref(1)
 const currentPage = ref(1)
-const pageSize = ref(Number(useRoute().query.pageSize) || 10)
+const pageSize = ref(Number(useRoute().query.pageSize) || 8)
 
 const route = useRoute()
 const router = useRouter()

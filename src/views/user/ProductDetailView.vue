@@ -24,8 +24,20 @@ const quantity = ref(1) // 新增：用于控制商品数量
 onMounted(async () => {
   const productId = route.params.id
   try {
+    // 1. 获取商品详情 (保持不变)
     const data = await api.getProductById(productId)
     product.value = data
+
+    // 2. 【新增】如果用户已登录，则上报点击行为
+    if (userStore.isLoggedIn) {
+      try {
+        await api.trackBehavior(productId, 'click')
+        console.log(`Behavior tracked for product ${productId}`) // (可选) 开发时方便调试
+      } catch (trackError) {
+        // 即便上报失败，也不应该影响用户查看商品，所以在控制台记录错误即可
+        console.error('Failed to track behavior:', trackError)
+      }
+    }
   } catch (error) {
     console.error('获取商品详情失败:', error)
   } finally {

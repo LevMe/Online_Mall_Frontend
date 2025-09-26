@@ -87,6 +87,16 @@ export const api = {
     })
   },
 
+  // --- 跟踪用户点击行为 ---
+  // --- 用户行为 ---
+  trackBehavior: (productId, eventType = 'click') => {
+    return apiClient.post('/behaviors/track', {
+      productId,
+      eventType,
+      timestamp: new Date().toISOString(), // 直接生成当前时间的 ISO 字符串
+    })
+  },
+
   // --- 订单 ---
   createOrder: () => {
     return apiClient.post('/orders')
