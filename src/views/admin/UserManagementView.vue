@@ -22,7 +22,58 @@ const searchKeyword = ref('')
 
 const totalPages = computed(() => Math.ceil(totalUsers.value / itemsPerPage.value))
 
-// ... (openAddModal, openEditModal, handleFormSubmit, openDeleteConfirm, handleConfirmDelete 保持不变)
+const openAddModal = () => {
+  userBeingEdited.value = null
+  isFormModalVisible.value = true
+}
+
+const openEditModal = (user) => {
+  userBeingEdited.value = { ...user }
+  isFormModalVisible.value = true
+}
+
+const handleFormSubmit = async (userData) => {
+  try {
+    if (userBeingEdited.value) {
+      const updatedUser = await api.updateUser(userBeingEdited.value.id, userData)
+      const index = allUsers.value.findIndex((u) => u.id === updatedUser.id)
+      if (index !== -1) {
+        allUsers.value.splice(index, 1, updatedUser)
+      }
+      notificationStore.showNotification('用户更新成功！', 'success')
+    } else {
+      const newUser = await api.createUser(userData)
+      allUsers.value.unshift(newUser)
+      notificationStore.showNotification('用户添加成功！', 'success')
+    }
+  } catch (error) {
+    notificationStore.showNotification(error.message || '操作失败，请重试', 'error')
+  } finally {
+    isFormModalVisible.value = false
+    fetchUsers(currentPage.value)
+  }
+}
+
+const openDeleteConfirm = (user) => {
+  userToDelete.value = user
+  isDeleteConfirmVisible.value = true
+}
+
+const handleConfirmDelete = async () => {
+  if (!userToDelete.value) return
+
+  try {
+    await api.deleteUser(userToDelete.value.id)
+    allUsers.value = allUsers.value.filter((u) => u.id !== userToDelete.value.id)
+    notificationStore.showNotification('用户删除成功！', 'success')
+  } catch (error) {
+    notificationStore.showNotification(error.message || '删除失败，请重试', 'error')
+  } finally {
+    isDeleteConfirmVisible.value = false
+    userToDelete.value = null
+    fetchUsers(currentPage.value)
+  }
+}
 
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {

@@ -15,6 +15,7 @@ import ProductManagementView from '../views/admin/ProductManagementView.vue'
 import UserManagementView from '../views/admin/UserManagementView.vue'
 import UserSupportView from '@/views/user/UserSupportView.vue'
 import OrderView from '@/views/user/OrderView.vue'
+import RecommendationTrainingView from '../views/admin/RecommendationTrainingView.vue'
 
 const routes = [
   // --- 用户前台路由 ---
@@ -57,6 +58,11 @@ const routes = [
         path: 'users',
         name: 'adminUserList',
         component: UserManagementView,
+      },
+      {
+        path: 'recommendations',
+        name: 'adminRecommendation',
+        component: RecommendationTrainingView,
       },
     ],
   },

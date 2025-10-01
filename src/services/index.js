@@ -140,4 +140,16 @@ export const api = {
   deleteUser: (userId) => {
     return apiClient.delete(`/admin/users/${userId}`)
   },
+  /**
+   * 获取所有用户行为记录
+   */
+  getBehaviors: () => {
+    return apiClient.get('/admin/behaviors')
+  },
+  /**
+   * 触发推荐模型离线训练
+   */
+  triggerTraining: () => {
+    return apiClient.post('/admin/recommendations/trigger-training')
+  },
 }

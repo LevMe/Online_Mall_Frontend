@@ -16,6 +16,9 @@ import { RouterLink } from 'vue-router'
           <RouterLink :to="{ name: 'adminUserList' }">用户管理</RouterLink>
         </li>
         <li>
+          <RouterLink :to="{ name: 'adminRecommendation' }">模型管理</RouterLink>
+        </li>
+        <li>
           <RouterLink :to="{ name: 'home' }" class="back-to-store">返回商城</RouterLink>
         </li>
       </ul>
